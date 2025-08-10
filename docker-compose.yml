@@ -1,0 +1,62 @@
+# Nama file: docker-compose.yml
+version: "3.8"
+
+services:
+  cassandra_a:
+    image: cassandra:3.11
+    container_name: cassandra_a
+    cap_add: [ "IPC_LOCK", "SYS_NICE" ]
+    ulimits:
+      memlock: -1
+    volumes:
+      - ./cassandra-env.sh:/etc/cassandra/cassandra-env.sh # mount file configuration
+      - /mnt/slowfs/cassandra_a:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_SEEDS=cassandra_a
+    networks:
+      cassandra_net:
+        ipv4_address: 172.28.0.2
+
+  cassandra_b:
+    image: cassandra:3.11
+    container_name: cassandra_b
+    cap_add: [ "IPC_LOCK", "SYS_NICE" ]
+    ulimits:
+      memlock: -1
+    volumes:
+      - ./cassandra-env.sh:/etc/cassandra/cassandra-env.sh 
+      - /mnt/slowfs/cassandra_b:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_SEEDS=cassandra_a
+    depends_on:
+      - cassandra_a
+    networks:
+      cassandra_net:
+        ipv4_address: 172.28.0.3
+
+  cassandra_c:
+    image: cassandra:3.11
+    container_name: cassandra_c
+    cap_add: [ "IPC_LOCK", "SYS_NICE" ]
+    ulimits:
+      memlock: -1
+    volumes:
+      - ./cassandra-env.sh:/etc/cassandra/cassandra-env.sh 
+      - /mnt/slowfs/cassandra_c:/var/lib/cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_SEEDS=cassandra_a
+    depends_on:
+      - cassandra_a
+    networks:
+      cassandra_net:
+        ipv4_address: 172.28.0.4
+
+networks:
+  cassandra_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
